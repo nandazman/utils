@@ -42,7 +42,7 @@ jobs:
               cd utils
               bun install
               bun run build:css
-              pm2 start bun --name utils -- run start
+              pm2 start --name utils --interpreter ~/.bun/bin/bun index.ts
               pm2 save
             else
               cd /home/ubuntu/utils
