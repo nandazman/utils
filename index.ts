@@ -2,6 +2,21 @@ import { Elysia } from "elysia";
 import { Innertube } from "youtubei.js";
 
 const app = new Elysia()
+  // Trailing slash middleware - redirect all paths without trailing slash (except files)
+  .onBeforeHandle(({ request, set }) => {
+    const url = new URL(request.url);
+    const path = url.pathname;
+
+    // Skip if already has trailing slash, is root, or has file extension
+    if (path === "/" || path.endsWith("/") || path.match(/\.[a-zA-Z0-9]+$/)) {
+      return;
+    }
+
+    // Redirect with trailing slash using 308 (permanent, preserves method)
+    set.status = 308;
+    set.redirect = path + "/" + url.search;
+  })
+
   // Serve CSS from dist folder
   .get("/dist/output.css", () => Bun.file("public/dist/output.css"))
 
