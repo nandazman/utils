@@ -1,0 +1,659 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>JSON Viewer & Comparator - Utils</title>
+  <link rel="stylesheet" href="/dist/output.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&family=Quicksand:wght@400;600;700&display=swap" rel="stylesheet">
+</head>
+<body class="bg-gradient-to-br from-cream-200 to-warm-200 font-quicksand min-h-screen p-6 hide-scrollbar overflow-y-auto">
+  <div class="container mx-auto max-w-7xl">
+    <!-- Header -->
+    <div class="bg-white rounded-[30px] p-8 mb-6 shadow-[0_15px_40px_rgba(255,180,100,0.15)] border-[3px] border-warm-300">
+      <a href="/" class="inline-block text-warm-500 no-underline mb-6 font-semibold text-base transition-all hover:-translate-x-1 hover:text-warm-600">← Back</a>
+      <h1 class="font-fredoka text-warm-500 text-4xl font-bold mb-2">🔍 JSON Viewer & Comparator</h1>
+      <p class="text-brown-400 text-sm">View, compare, and analyze JSON data side-by-side</p>
+    </div>
+
+    <!-- Two Panel Layout -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+      <!-- Left Panel -->
+      <div class="bg-white rounded-[30px] p-6 shadow-[0_8px_20px_rgba(255,180,100,0.1)] border-[3px] border-warm-300">
+        <h2 class="font-fredoka text-xl font-semibold text-warm-600 mb-4">📄 Left JSON</h2>
+        <div id="jsonInputs"></div>
+      </div>
+
+      <!-- Right Panel -->
+      <div class="bg-white rounded-[30px] p-6 shadow-[0_8px_20px_rgba(255,180,100,0.1)] border-[3px] border-warm-300">
+        <h2 class="font-fredoka text-xl font-semibold text-warm-600 mb-4">📄 Right JSON</h2>
+        <div id="jsonInputs2"></div>
+      </div>
+    </div>
+
+    <!-- Compare Button -->
+    <div class="text-center mb-6">
+      <button id="standaloneCompareBtn" onclick="standaloneCompare()" class="px-6 py-3 bg-warm-400 text-white font-fredoka font-semibold text-base rounded-[18px] border-[3px] border-warm-500 shadow-[0_4px_12px_rgba(255,180,100,0.25)] transition-all hover:bg-warm-500 hover:-translate-y-1 hover:shadow-[0_8px_20px_rgba(255,180,100,0.35)]">
+        🔄 Compare JSONs
+      </button>
+      <div id="compareStatus" class="mt-3 text-sm text-brown-400"></div>
+    </div>
+
+    <!-- Comparison Section -->
+    <div id="comparisonSection" class="hidden bg-white rounded-[25px] p-8 shadow-[0_15px_40px_rgba(255,180,100,0.15)] border-[3px] border-warm-300">
+      <div class="flex items-center justify-between mb-6 pb-4 border-b-2 border-warm-200">
+        <h3 class="font-fredoka text-2xl font-bold text-warm-600">Comparison Results</h3>
+        <button id="summaryToggleBtn" onclick="toggleSummary()" class="px-4 py-2 bg-warm-100 border-2 border-warm-300 rounded-[12px] font-semibold text-sm text-warm-600 transition-all hover:bg-warm-50 hover:border-warm-500">
+          📊 Show Summary
+        </button>
+      </div>
+      <div id="comparisonGrid" class="flex flex-col gap-5"></div>
+    </div>
+  </div>
+
+  <script>
+    let jsonInputs = [];
+    let jsonInputs2 = [];
+    let summaryVisible = false;
+
+    document.addEventListener('DOMContentLoaded', () => {
+      addJsonInput();
+      addJsonInput2();
+      loadSampleData();
+    });
+
+    function loadSampleData() {
+      const sampleJson1 = {
+        "user": {
+          "id": 1,
+          "name": "John Doe",
+          "email": "john@example.com",
+          "address": { "street": "123 Main St", "city": "New York", "zipCode": "10001" },
+          "hobbies": ["reading", "swimming", "coding"],
+          "skills": [
+            {"name": "JavaScript", "level": "expert"},
+            {"name": "Python", "level": "intermediate"},
+            {"name": "React", "level": "advanced"}
+          ],
+          "isActive": true,
+          "lastLogin": "2024-01-15T10:30:00Z"
+        },
+        "metadata": { "version": "1.0", "created": "2024-01-01", "tags": ["user", "profile"] }
+      };
+
+      const sampleJson2 = {
+        "user": {
+          "id": 1,
+          "name": "Jane Smith",
+          "email": "jane@example.com",
+          "address": { "street": "456 Oak Ave", "city": "Los Angeles", "zipCode": "90210" },
+          "hobbies": ["reading", "swimming", "coding"],
+          "skills": [
+            {"name": "JavaScript", "level": "expert"},
+            {"name": "Python", "level": "intermediate"},
+            {"name": "Vue", "level": "advanced"}
+          ],
+          "isActive": true,
+          "lastLogin": "2024-01-15T10:30:00Z"
+        },
+        "metadata": { "version": "1.0", "created": "2024-01-01", "tags": ["user", "profile"] },
+        "preferences": { "theme": "dark", "notifications": true }
+      };
+
+      setTimeout(() => {
+        const t1 = document.getElementById('jsonInput_0');
+        const t2 = document.getElementById('jsonInput2_0');
+        if (t1) t1.value = JSON.stringify(sampleJson1, null, 2);
+        if (t2) t2.value = JSON.stringify(sampleJson2, null, 2);
+      }, 120);
+    }
+
+    function addJsonInput() {
+      const container = document.getElementById('jsonInputs');
+      const inputId = `jsonInput_${jsonInputs.length}`;
+      const groupId = `jsonGroup_${jsonInputs.length}`;
+
+      const div = document.createElement('div');
+      div.className = 'mb-5';
+      div.id = groupId;
+      div.innerHTML = `
+        <textarea class="w-full min-h-[200px] p-4 border-2 border-warm-200 rounded-[15px] font-mono text-xs resize-y bg-warm-50 text-gray-800 focus:outline-none focus:border-warm-500 focus:bg-white transition-all hide-scrollbar" id="${inputId}" placeholder="Paste your JSON here..."></textarea>
+        <div class="flex flex-wrap gap-2 mt-3">
+          <button class="px-3 py-2 bg-warm-500 text-white rounded-[10px] font-medium text-xs transition-all hover:bg-warm-600 hover:-translate-y-0.5 shadow-sm" onclick="togglePreview('${inputId}')">👁 Preview</button>
+          <button class="px-3 py-2 bg-green-500 text-white rounded-[10px] font-medium text-xs transition-all hover:bg-green-600 hover:-translate-y-0.5 shadow-sm" onclick="beautifyJson('${inputId}')">✨ Beautify</button>
+          <button class="px-3 py-2 bg-gray-500 text-white rounded-[10px] font-medium text-xs transition-all hover:bg-gray-600 hover:-translate-y-0.5 shadow-sm" onclick="clearJson('${inputId}')">🗑 Clear</button>
+        </div>
+        <div class="mt-4 hidden" id="preview_${inputId}">
+          <div class="flex items-center justify-between mb-3">
+            <span class="font-semibold text-sm text-brown-500">JSON Preview</span>
+            <div class="flex gap-2">
+              <button class="px-2.5 py-1.5 bg-warm-100 border border-warm-300 rounded-[8px] text-xs font-medium text-brown-500 transition-all hover:bg-warm-50" onclick="expandAll('viewer_${inputId}')">Expand</button>
+              <button class="px-2.5 py-1.5 bg-warm-100 border border-warm-300 rounded-[8px] text-xs font-medium text-brown-500 transition-all hover:bg-warm-50" onclick="collapseAll('viewer_${inputId}')">Collapse</button>
+              <button class="px-2.5 py-1.5 bg-warm-100 border border-warm-300 rounded-[8px] text-xs font-medium text-brown-500 transition-all hover:bg-warm-50" onclick="copyToClipboard('${inputId}')">📋 Copy</button>
+            </div>
+          </div>
+          <div class="font-mono text-xs leading-relaxed bg-white p-4 rounded-[12px] border border-warm-200" id="viewer_${inputId}"></div>
+        </div>
+      `;
+      container.appendChild(div);
+      jsonInputs.push(inputId);
+    }
+
+    function addJsonInput2() {
+      const container = document.getElementById('jsonInputs2');
+      const inputId = `jsonInput2_${jsonInputs2.length}`;
+      const groupId = `jsonGroup2_${jsonInputs2.length}`;
+
+      const div = document.createElement('div');
+      div.className = 'mb-5';
+      div.id = groupId;
+      div.innerHTML = `
+        <textarea class="w-full min-h-[200px] p-4 border-2 border-warm-200 rounded-[15px] font-mono text-xs resize-y bg-warm-50 text-gray-800 focus:outline-none focus:border-warm-500 focus:bg-white transition-all hide-scrollbar" id="${inputId}" placeholder="Paste your JSON here..."></textarea>
+        <div class="flex flex-wrap gap-2 mt-3">
+          <button class="px-3 py-2 bg-warm-500 text-white rounded-[10px] font-medium text-xs transition-all hover:bg-warm-600 hover:-translate-y-0.5 shadow-sm" onclick="togglePreview('${inputId}')">👁 Preview</button>
+          <button class="px-3 py-2 bg-green-500 text-white rounded-[10px] font-medium text-xs transition-all hover:bg-green-600 hover:-translate-y-0.5 shadow-sm" onclick="beautifyJson('${inputId}')">✨ Beautify</button>
+          <button class="px-3 py-2 bg-gray-500 text-white rounded-[10px] font-medium text-xs transition-all hover:bg-gray-600 hover:-translate-y-0.5 shadow-sm" onclick="clearJson('${inputId}')">🗑 Clear</button>
+        </div>
+        <div class="mt-4 hidden" id="preview_${inputId}">
+          <div class="flex items-center justify-between mb-3">
+            <span class="font-semibold text-sm text-brown-500">JSON Preview</span>
+            <div class="flex gap-2">
+              <button class="px-2.5 py-1.5 bg-warm-100 border border-warm-300 rounded-[8px] text-xs font-medium text-brown-500 transition-all hover:bg-warm-50" onclick="expandAll('viewer_${inputId}')">Expand</button>
+              <button class="px-2.5 py-1.5 bg-warm-100 border border-warm-300 rounded-[8px] text-xs font-medium text-brown-500 transition-all hover:bg-warm-50" onclick="collapseAll('viewer_${inputId}')">Collapse</button>
+              <button class="px-2.5 py-1.5 bg-warm-100 border border-warm-300 rounded-[8px] text-xs font-medium text-brown-500 transition-all hover:bg-warm-50" onclick="copyToClipboard('${inputId}')">📋 Copy</button>
+            </div>
+          </div>
+          <div class="font-mono text-xs leading-relaxed bg-white p-4 rounded-[12px] border border-warm-200" id="viewer_${inputId}"></div>
+        </div>
+      `;
+      container.appendChild(div);
+      jsonInputs2.push(inputId);
+    }
+
+    function removeJsonInput(id){ const el=document.getElementById(id); if(el){ el.remove(); updateComparisonSection(); } }
+    function removeJsonInput2(id){ const el=document.getElementById(id); if(el){ el.remove(); updateComparisonSection(); } }
+
+    function clearJson(id){
+      const t = document.getElementById(id);
+      const p = document.getElementById(`preview_${id}`);
+      t.value='';
+      t.classList.remove('border-red-500', 'bg-red-50');
+      p.classList.add('hidden');
+    }
+
+    function beautifyJson(id){
+      const t = document.getElementById(id);
+      const v = t.value.trim();
+      if(!v){ alert('Please enter some JSON data first.'); return; }
+      try {
+        t.value = JSON.stringify(JSON.parse(v), null, 2);
+        t.classList.remove('border-red-500', 'bg-red-50');
+      } catch {
+        t.classList.add('border-red-500', 'bg-red-50');
+        alert('Invalid JSON format. Cannot beautify invalid JSON.');
+      }
+    }
+
+    function togglePreview(id){
+      const t = document.getElementById(id);
+      const v = t.value.trim();
+      const p = document.getElementById(`preview_${id}`);
+      const viewer = document.getElementById(`viewer_${id}`);
+
+      if(!v){ alert('Please enter some JSON data first.'); return; }
+      if(!p.classList.contains('hidden')){ p.classList.add('hidden'); return; }
+
+      try{
+        const parsed = JSON.parse(v);
+        t.classList.remove('border-red-500', 'bg-red-50');
+        viewer.innerHTML = renderNode(parsed, false);
+        p.classList.remove('hidden');
+        updateComparisonSection();
+      }catch{
+        t.classList.add('border-red-500', 'bg-red-50');
+        alert('Invalid JSON format. Please check your input.');
+        viewer.innerHTML = '<div class="text-red-600 p-3 bg-red-50 rounded-lg">Invalid JSON format. Please check your input and try again.</div>';
+        p.classList.remove('hidden');
+      }
+    }
+
+    function renderNode(obj, trailingComma) {
+      if (obj === null) return `<span class="text-indigo-500">null</span>${trailingComma?`<span class="text-gray-900">,</span>`:''}`;
+      if (typeof obj === 'string') return `<span class="text-sky-700">"${obj}"</span>${trailingComma?`<span class="text-gray-900">,</span>`:''}`;
+      if (typeof obj === 'number') return `<span class="text-purple-600">${obj}</span>${trailingComma?`<span class="text-gray-900">,</span>`:''}`;
+      if (typeof obj === 'boolean') return `<span class="text-orange-600">${obj}</span>${trailingComma?`<span class="text-gray-900">,</span>`:''}`;
+
+      if (Array.isArray(obj)) {
+        const n = obj.length;
+        if (n === 0) {
+          return `<span><div class="flex items-baseline gap-1.5"><span class="text-gray-900 select-none">[ ]</span>${trailingComma?`<span class="text-gray-900">,</span>`:''}</div></span>`;
+        }
+        const items = obj.map((item, idx) => {
+          const commaForItem = idx < n - 1;
+          return `<div class="my-1">${renderNode(item, commaForItem)}</div>`;
+        }).join('');
+        return `
+          <span class="json-wrapper">
+            <div class="flex items-baseline gap-1.5" data-type="array">
+              <span class="cursor-pointer select-none text-slate-500 text-xs leading-none mr-0.5 transition-colors duration-200 hover:text-warm-500" onclick="toggleJsonItem(this)">▼</span>
+              <span class="text-gray-900 select-none json-open-brace">[</span>
+              <span class="hidden whitespace-nowrap text-slate-400 italic json-inline-collapsed">[ … ${n} item${n!==1?'s':''} ].</span><span class="hidden text-gray-900 json-inline-comma">${trailingComma?',':''}</span>
+            </div>
+            <div class="ml-5 json-children">${items}</div>
+            <div class="flex json-closeline">
+              <span class="text-gray-900 select-none">]</span>${trailingComma?`<span class="text-gray-900">,</span>`:''}
+            </div>
+          </span>
+        `;
+      }
+
+      const keys = Object.keys(obj);
+      const n = keys.length;
+      if (n === 0) {
+        return `<span><div class="flex items-baseline gap-1.5"><span class="text-gray-900 select-none">{ }</span>${trailingComma?`<span class="text-gray-900">,</span>`:''}</div></span>`;
+      }
+
+      const items = keys.map((k, i) => {
+        const commaForItem = i < n - 1;
+        const v = obj[k];
+        return `<div class="my-1"><span class="text-red-600 font-semibold">"${k}"</span>: ${renderNode(v, commaForItem)}</div>`;
+      }).join('');
+
+      return `
+        <span class="json-wrapper">
+          <div class="flex items-baseline gap-1.5" data-type="object">
+            <span class="cursor-pointer select-none text-slate-500 text-xs leading-none mr-0.5 transition-colors duration-200 hover:text-warm-500" onclick="toggleJsonItem(this)">▼</span>
+            <span class="text-gray-900 select-none json-open-brace">{</span>
+            <span class="hidden whitespace-nowrap text-slate-400 italic json-inline-collapsed">{ … ${n} key${n!==1?'s':''} }.</span><span class="hidden text-gray-900 json-inline-comma">${trailingComma?',':''}</span>
+          </div>
+          <div class="ml-5 json-children">${items}</div>
+          <div class="flex json-closeline">
+            <span class="text-gray-900 select-none">}</span>${trailingComma?`<span class="text-gray-900">,</span>`:''}
+          </div>
+        </span>
+      `;
+    }
+
+    function renderNodeWithHighlight(obj, compareObj, trailingComma, path = '') {
+      const isPrimitive = (v) => v === null || typeof v === 'string' || typeof v === 'number' || typeof v === 'boolean';
+      if (isPrimitive(obj)) {
+        const bothExist = typeof compareObj !== 'undefined';
+        const differs = bothExist && JSON.stringify(obj) !== JSON.stringify(compareObj);
+        const content =
+          obj === null ? 'null' :
+          typeof obj === 'string' ? `"${obj}"` :
+          String(obj);
+        const wrapped = differs ? `<span class="bg-green-100 text-green-800 px-1.5 py-0.5 rounded font-mono">${content}</span>` :
+                      (obj === null ? `<span class="text-indigo-500">${content}</span>` :
+                       typeof obj === 'string' ? `<span class="text-sky-700">${content}</span>` :
+                       typeof obj === 'number' ? `<span class="text-purple-600">${content}</span>` :
+                       `<span class="text-orange-600">${content}</span>`);
+        return `${wrapped}${trailingComma?`<span class="text-gray-900">,</span>`:''}`;
+      }
+
+      if (Array.isArray(obj)) {
+        const n = obj.length;
+        if (n === 0) {
+          return `<span><div class="flex items-baseline gap-1.5"><span class="text-gray-900 select-none">[ ]</span>${trailingComma?`<span class="text-gray-900">,</span>`:''}</div></span>`;
+        }
+        const items = obj.map((item, idx) => {
+          const cmp = Array.isArray(compareObj) ? compareObj[idx] : undefined;
+          const commaForItem = idx < n - 1;
+          return `<div class="my-1">${renderNodeWithHighlight(item, cmp, commaForItem, path + '[' + idx + ']')}</div>`;
+        }).join('');
+        return `
+          <span class="json-wrapper">
+            <div class="flex items-baseline gap-1.5" data-type="array">
+              <span class="cursor-pointer select-none text-slate-500 text-xs leading-none mr-0.5 transition-colors duration-200 hover:text-warm-500" onclick="toggleJsonItem(this)">▼</span>
+              <span class="text-gray-900 select-none json-open-brace">[</span>
+              <span class="hidden whitespace-nowrap text-slate-400 italic json-inline-collapsed">[ … ${n} item${n!==1?'s':''} ].</span><span class="hidden text-gray-900 json-inline-comma">${trailingComma?',':''}</span>
+            </div>
+            <div class="ml-5 json-children">${items}</div>
+            <div class="flex json-closeline">
+              <span class="text-gray-900 select-none">]</span>${trailingComma?`<span class="text-gray-900">,</span>`:''}
+            </div>
+          </span>
+        `;
+      }
+
+      const keys = Object.keys(obj);
+      const n = keys.length;
+      if (n === 0) {
+        return `<span><div class="flex items-baseline gap-1.5"><span class="text-gray-900 select-none">{ }</span>${trailingComma?`<span class="text-gray-900">,</span>`:''}</div></span>`;
+      }
+
+      const items = keys.map((key, i) => {
+        const v = obj[key];
+        const cmpPresent = compareObj && Object.prototype.hasOwnProperty.call(compareObj, key);
+        const cmp = cmpPresent ? compareObj[key] : undefined;
+        const keyClass = cmpPresent ? 'text-red-600 font-semibold' : 'bg-red-100 text-red-800 px-1.5 py-0.5 rounded font-medium';
+        const commaForItem = i < n - 1;
+        return `<div class="my-1"><span class="${keyClass}">"${key}"</span>: ${renderNodeWithHighlight(v, cmp, commaForItem, path ? `${path}.${key}` : key)}</div>`;
+      }).join('');
+
+      return `
+        <span class="json-wrapper">
+          <div class="flex items-baseline gap-1.5" data-type="object">
+            <span class="cursor-pointer select-none text-slate-500 text-xs leading-none mr-0.5 transition-colors duration-200 hover:text-warm-500" onclick="toggleJsonItem(this)">▼</span>
+            <span class="text-gray-900 select-none json-open-brace">{</span>
+            <span class="hidden whitespace-nowrap text-slate-400 italic json-inline-collapsed">{ … ${n} key${n!==1?'s':''} }.</span><span class="hidden text-gray-900 json-inline-comma">${trailingComma?',':''}</span>
+          </div>
+          <div class="ml-5 json-children">${items}</div>
+          <div class="flex json-closeline">
+            <span class="text-gray-900 select-none">}</span>${trailingComma?`<span class="text-gray-900">,</span>`:''}
+          </div>
+        </span>
+      `;
+    }
+
+    function renderJsonWithHighlight(a, b) { return renderNodeWithHighlight(a, b, false, ''); }
+
+    function toggleJsonItem(toggle) {
+      const wrapper = toggle.closest('.json-wrapper');
+      if (!wrapper) return;
+
+      const children   = wrapper.querySelector(':scope > .json-children');
+      const closeline  = wrapper.querySelector(':scope > .json-closeline');
+      const openline   = wrapper.querySelector(':scope > div[data-type]');
+      const openBrace  = openline?.querySelector('.json-open-brace');
+      const inlineTok  = openline?.querySelector('.json-inline-collapsed');
+      const inlineComma= openline?.querySelector('.json-inline-comma');
+
+      const isExpanded = !children?.classList.contains('hidden');
+
+      if (isExpanded) {
+        children?.classList.add('hidden');
+        closeline?.classList.add('hidden');
+        openBrace?.classList.add('hidden');
+        inlineTok?.classList.remove('hidden');
+        inlineComma?.classList.remove('hidden');
+        toggle.textContent = '▶';
+      } else {
+        children?.classList.remove('hidden');
+        closeline?.classList.remove('hidden');
+        openBrace?.classList.remove('hidden');
+        inlineTok?.classList.add('hidden');
+        inlineComma?.classList.add('hidden');
+        toggle.textContent = '▼';
+      }
+    }
+
+    function expandAll(viewerId) {
+      const root = document.getElementById(viewerId);
+      if (!root) return;
+      root.querySelectorAll('.json-wrapper').forEach(w => {
+        const children = w.querySelector(':scope > .json-children');
+        const closeline= w.querySelector(':scope > .json-closeline');
+        const openBrace= w.querySelector(':scope > div[data-type] .json-open-brace');
+        const inlineTok= w.querySelector(':scope > div[data-type] .json-inline-collapsed');
+        const inlineComma= w.querySelector(':scope > div[data-type] .json-inline-comma');
+        const toggle = w.querySelector(':scope > div[data-type] > span:first-child');
+
+        children?.classList.remove('hidden');
+        closeline?.classList.remove('hidden');
+        openBrace?.classList.remove('hidden');
+        inlineTok?.classList.add('hidden');
+        inlineComma?.classList.add('hidden');
+        if (toggle) toggle.textContent = '▼';
+      });
+    }
+
+    function collapseAll(viewerId) {
+      const root = document.getElementById(viewerId);
+      if (!root) return;
+      root.querySelectorAll('.json-wrapper').forEach(w => {
+        const children = w.querySelector(':scope > .json-children');
+        const closeline= w.querySelector(':scope > .json-closeline');
+        const openBrace= w.querySelector(':scope > div[data-type] .json-open-brace');
+        const inlineTok= w.querySelector(':scope > div[data-type] .json-inline-collapsed');
+        const inlineComma= w.querySelector(':scope > div[data-type] .json-inline-comma');
+        const toggle = w.querySelector(':scope > div[data-type] > span:first-child');
+
+        children?.classList.add('hidden');
+        closeline?.classList.add('hidden');
+        openBrace?.classList.add('hidden');
+        inlineTok?.classList.remove('hidden');
+        inlineComma?.classList.remove('hidden');
+        if (toggle) toggle.textContent = '▶';
+      });
+    }
+
+    function updateComparisonSection() {
+      const section = document.getElementById('comparisonSection');
+      const valid1 = jsonInputs.filter(id => {
+        const t=document.getElementById(id);
+        return t && t.value.trim() && !t.classList.contains('border-red-500');
+      });
+      const valid2 = jsonInputs2.filter(id => {
+        const t=document.getElementById(id);
+        return t && t.value.trim() && !t.classList.contains('border-red-500');
+      });
+      if (valid1.length && valid2.length) {
+        section.classList.remove('hidden');
+      } else {
+        section.classList.add('hidden');
+      }
+    }
+
+    function standaloneCompare() {
+      const status = document.getElementById('compareStatus');
+      const valid1 = jsonInputs.filter(id => {
+        const t=document.getElementById(id);
+        return t.value.trim() && !t.classList.contains('border-red-500');
+      });
+      const valid2 = jsonInputs2.filter(id => {
+        const t=document.getElementById(id);
+        return t.value.trim() && !t.classList.contains('border-red-500');
+      });
+      if(!valid1.length){
+        status.textContent='❌ Please add valid JSON to the left panel';
+        status.className = 'mt-3 text-sm text-red-600';
+        return;
+      }
+      if(!valid2.length){
+        status.textContent='❌ Please add valid JSON to the right panel';
+        status.className = 'mt-3 text-sm text-red-600';
+        return;
+      }
+
+      try { JSON.parse(document.getElementById(valid1[0]).value); }
+      catch {
+        status.textContent='❌ Invalid JSON in left panel';
+        status.className = 'mt-3 text-sm text-red-600';
+        return;
+      }
+      try { JSON.parse(document.getElementById(valid2[0]).value); }
+      catch {
+        status.textContent='❌ Invalid JSON in right panel';
+        status.className = 'mt-3 text-sm text-red-600';
+        return;
+      }
+
+      const section = document.getElementById('comparisonSection');
+      section.classList.remove('hidden');
+      section.scrollIntoView({behavior:'smooth'});
+      compareJsons();
+    }
+
+    function compareJsons() {
+      const valid1 = jsonInputs.filter(id => {
+        const t=document.getElementById(id);
+        return t.value.trim() && !t.classList.contains('border-red-500');
+      });
+      const valid2 = jsonInputs2.filter(id => {
+        const t=document.getElementById(id);
+        return t.value.trim() && !t.classList.contains('border-red-500');
+      });
+      if(!valid1.length || !valid2.length) return;
+
+      const grid = document.getElementById('comparisonGrid');
+      const existingSummary = document.getElementById('summaryItem');
+      if(!existingSummary) grid.innerHTML='';
+
+      const json1 = JSON.parse(document.getElementById(valid1[0]).value);
+      const json2 = JSON.parse(document.getElementById(valid2[0]).value);
+
+      const item = document.createElement('div');
+      item.className='bg-warm-50 border-2 border-warm-200 rounded-[20px] overflow-hidden';
+      item.innerHTML = `
+        <div class="bg-gradient-to-r from-warm-100 to-warm-50 p-4 font-semibold text-warm-700 border-b-2 border-warm-200">Left Panel vs Right Panel</div>
+        <div class="p-5">
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+            <div>
+              <h4 class="font-fredoka text-base font-semibold text-brown-500 mb-3">Left Panel JSON</h4>
+              <div class="font-mono text-xs leading-relaxed bg-white p-4 rounded-[12px] border border-warm-200">${renderJsonWithHighlight(json1, json2)}</div>
+            </div>
+            <div>
+              <h4 class="font-fredoka text-base font-semibold text-brown-500 mb-3">Right Panel JSON</h4>
+              <div class="font-mono text-xs leading-relaxed bg-white p-4 rounded-[12px] border border-warm-200">${renderJsonWithHighlight(json2, json1)}</div>
+            </div>
+          </div>
+        </div>
+      `;
+      grid.appendChild(item);
+    }
+
+    function toggleSummary() {
+      const btn = document.getElementById('summaryToggleBtn');
+      const grid = document.getElementById('comparisonGrid');
+      summaryVisible = !summaryVisible;
+
+      const valid1 = jsonInputs.filter(id => {
+        const t=document.getElementById(id);
+        return t.value.trim() && !t.classList.contains('border-red-500');
+      });
+      const valid2 = jsonInputs2.filter(id => {
+        const t=document.getElementById(id);
+        return t.value.trim() && !t.classList.contains('border-red-500');
+      });
+      if(!valid1.length || !valid2.length){
+        alert('Please provide at least 1 valid JSON input on each side to compare.');
+        summaryVisible=false;
+        return;
+      }
+
+      if (summaryVisible) {
+        btn.textContent = '📊 Show Comparison Panel';
+        const existing = grid.querySelector('.bg-warm-50');
+        if (existing) existing.remove();
+
+        const json1 = JSON.parse(document.getElementById(valid1[0]).value);
+        const json2 = JSON.parse(document.getElementById(valid2[0]).value);
+
+        const summary = document.createElement('div');
+        summary.className='bg-warm-50 border-2 border-warm-200 rounded-[20px] overflow-hidden';
+        summary.id='summaryItem';
+        summary.innerHTML = `
+          <div class="bg-gradient-to-r from-warm-100 to-warm-50 p-4 font-semibold text-warm-700 border-b-2 border-warm-200">JSON Comparison Summary</div>
+          <div class="p-5">${renderComparisonAsTable(json1, json2)}</div>
+        `;
+        grid.appendChild(summary);
+      } else {
+        btn.textContent = '📊 Show Summary';
+        const summary = document.getElementById('summaryItem');
+        if (summary) summary.remove();
+        compareJsons();
+      }
+    }
+
+    function renderComparisonAsTable(obj1, obj2, path = '') {
+      const diffs = findDifferences(obj1, obj2, path);
+      if (!diffs.length) return '<div class="text-green-600 font-semibold p-5 text-center bg-green-50 rounded-xl border-2 border-green-200">✓ No differences found - JSONs are identical</div>';
+
+      let out = '<div class="overflow-x-auto rounded-xl border-2 border-warm-200"><table class="w-full border-collapse">';
+      out += '<thead><tr class="bg-gradient-to-r from-warm-100 to-warm-50"><th class="p-3 text-left font-semibold text-sm border-b-2 border-warm-200 text-brown-600">Path</th><th class="p-3 text-left font-semibold text-sm border-b-2 border-warm-200 text-brown-600">Type</th><th class="p-3 text-left font-semibold text-sm border-b-2 border-warm-200 text-brown-600">Old Value / Removed</th><th class="p-3 text-left font-semibold text-sm border-b-2 border-warm-200 text-brown-600">New Value / Added</th></tr></thead><tbody class="bg-white">';
+      diffs.forEach((d, idx) => {
+        const rowClass = idx % 2 === 0 ? 'bg-white' : 'bg-warm-50';
+        out += `<tr class="${rowClass}">`;
+        out += `<td class="p-2.5 border-b border-warm-100 text-xs max-w-xs break-words">${d.path}</td>`;
+        if (d.type === 'added') {
+          out += `<td class="p-2.5 border-b border-warm-100"><span class="inline-block px-2 py-1 bg-green-100 text-green-700 rounded-lg text-xs font-medium">${d.type}</span></td><td class="p-2.5 border-b border-warm-100">-</td><td class="p-2.5 border-b border-warm-100"><span class="bg-green-100 text-green-800 px-1.5 py-0.5 rounded font-mono">${JSON.stringify(d.value)}</span></td>`;
+        } else if (d.type === 'removed') {
+          out += `<td class="p-2.5 border-b border-warm-100"><span class="inline-block px-2 py-1 bg-red-100 text-red-700 rounded-lg text-xs font-medium">${d.type}</span></td><td class="p-2.5 border-b border-warm-100"><span class="bg-red-100 text-red-800 px-1.5 py-0.5 rounded font-mono">${JSON.stringify(d.value)}</span></td><td class="p-2.5 border-b border-warm-100">-</td>`;
+        } else {
+          out += `<td class="p-2.5 border-b border-warm-100"><span class="inline-block px-2 py-1 bg-blue-100 text-blue-700 rounded-lg text-xs font-medium">${d.type}</span></td><td class="p-2.5 border-b border-warm-100"><span class="bg-red-100 text-red-800 px-1.5 py-0.5 rounded font-mono">${JSON.stringify(d.oldValue)}</span></td><td class="p-2.5 border-b border-warm-100"><span class="bg-green-100 text-green-800 px-1.5 py-0.5 rounded font-mono">${JSON.stringify(d.newValue)}</span></td>`;
+        }
+        out += '</tr>';
+      });
+      out += '</tbody></table></div>';
+      out += `<div class="mt-4 p-3 bg-yellow-50 border-2 border-yellow-200 rounded-xl text-yellow-800"><strong>Total differences:</strong> ${diffs.length}</div>`;
+      return out;
+    }
+
+    function findDifferences(obj1, obj2, path = '') {
+      const differences = [];
+
+      if (obj1 === null || obj1 === undefined) {
+        if (obj2 !== null && obj2 !== undefined) differences.push({ path: path || 'root', type: 'added', value: obj2 });
+        return differences;
+      }
+      if (obj2 === null || obj2 === undefined) {
+        differences.push({ path: path || 'root', type: 'removed', value: obj1 });
+        return differences;
+      }
+
+      if (Array.isArray(obj1) && Array.isArray(obj2)) {
+        const maxLen = Math.max(obj1.length, obj2.length);
+        for (let i=0;i<maxLen;i++){
+          const cur = path ? `${path}[${i}]` : `[${i}]`;
+          const v1 = obj1[i], v2 = obj2[i];
+          if (i >= obj1.length && i < obj2.length) differences.push({ path: cur, type: 'added', value: v2 });
+          else if (i < obj1.length && i >= obj2.length) differences.push({ path: cur, type: 'removed', value: v1 });
+          else if (v1 !== undefined && v2 !== undefined){
+            if (typeof v1 === 'object' && typeof v2 === 'object' && v1 !== null && v2 !== null) {
+              differences.push(...findDifferences(v1, v2, cur));
+            } else if (v1 !== v2) {
+              differences.push({ path: cur, type: 'changed', oldValue: v1, newValue: v2 });
+            }
+          }
+        }
+        return differences;
+      }
+
+      if (Array.isArray(obj1) !== Array.isArray(obj2)) {
+        differences.push({ path: path || 'root', type: 'changed', oldValue: obj1, newValue: obj2 });
+        return differences;
+      }
+
+      if (typeof obj1 === 'object' && typeof obj2 === 'object' && obj1 !== null && obj2 !== null) {
+        const keys = new Set([...Object.keys(obj1), ...Object.keys(obj2)]);
+        for (const k of keys) {
+          const cur = path ? `${path}.${k}` : k;
+          const v1 = Object.prototype.hasOwnProperty.call(obj1, k) ? obj1[k] : undefined;
+          const v2 = Object.prototype.hasOwnProperty.call(obj2, k) ? obj2[k] : undefined;
+
+          if (v1 === undefined && v2 !== undefined) differences.push({ path: cur, type: 'added', value: v2 });
+          else if (v1 !== undefined && v2 === undefined) differences.push({ path: cur, type: 'removed', value: v1 });
+          else if (typeof v1 === 'object' && typeof v2 === 'object' && v1 !== null && v2 !== null) {
+            differences.push(...findDifferences(v1, v2, cur));
+          } else if (v1 !== v2) {
+            differences.push({ path: cur, type: 'changed', oldValue: v1, newValue: v2 });
+          }
+        }
+      } else if (obj1 !== obj2) {
+        differences.push({ path: path || 'root', type: 'changed', oldValue: obj1, newValue: obj2 });
+      }
+
+      return differences;
+    }
+
+    function copyToClipboard(inputId) {
+      const t = document.getElementById(inputId);
+      const v = t.value.trim();
+      if(!v){ alert('No JSON data to copy.'); return; }
+      navigator.clipboard.writeText(v).then(() => {
+        const btn = event.target;
+        const original = btn.textContent;
+        btn.textContent = '✓ Copied!';
+        btn.className = 'px-3 py-1.5 bg-green-500 text-white rounded-[8px] text-xs font-medium';
+        setTimeout(()=>{
+          btn.textContent = original;
+          btn.className = 'px-2.5 py-1.5 bg-warm-100 border border-warm-300 rounded-[8px] text-xs font-medium text-brown-500 transition-all hover:bg-warm-50';
+        }, 1500);
+      }).catch(()=> alert('Failed to copy to clipboard.'));
+    }
+  </script>
+</body>
+</html>

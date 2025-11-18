@@ -1,0 +1,20 @@
+{
+  "name": "utils",
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "bun run dev:css & bun run dev:server",
+    "dev:server": "bun run --watch index.ts",
+    "dev:css": "bunx tailwindcss -i ./src/input.css -o ./public/dist/output.css --watch",
+    "build:css": "bunx tailwindcss -i ./src/input.css -o ./public/dist/output.css --minify",
+    "start": "bun run index.ts"
+  },
+  "dependencies": {
+    "elysia": "1.4.16",
+    "youtubei.js": "^10.0.0"
+  },
+  "devDependencies": {
+    "@types/bun": "latest",
+    "tailwindcss": "^3.4.0"
+  }
+}
