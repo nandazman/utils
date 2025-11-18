@@ -33,8 +33,21 @@ jobs:
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           port: 22
           script: |
-            cd /home/ubuntu/utils
-            git pull origin main
-            bun install
-            bun run build:css
-            pm2 restart utils || pm2 start bun --name utils -- run start
+            export PATH="$HOME/.bun/bin:$PATH"
+
+            # Clone repo if it doesn't exist
+            if [ ! -d "/home/ubuntu/utils" ]; then
+              cd /home/ubuntu
+              git clone git@github.com:nandazman/utils.git
+              cd utils
+              bun install
+              bun run build:css
+              pm2 start bun --name utils -- run start
+              pm2 save
+            else
+              cd /home/ubuntu/utils
+              git pull origin main
+              bun install
+              bun run build:css
+              pm2 restart utils
+            fi
