@@ -5,3 +5,4 @@ public/dist/
 .env
 .env.local
 bun.lockb
+server

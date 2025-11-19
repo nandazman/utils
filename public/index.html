@@ -1,44 +1,75 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Utils</title>
-    <link rel="stylesheet" href="/dist/output.css">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&family=Quicksand:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="stylesheet" href="tailwindcss" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&family=Quicksand:wght@400;600;700&display=swap"
+      rel="stylesheet"
+    />
     <style>
-        .tool-card::before {
-            content: '';
-            position: absolute;
-            top: -30%;
-            right: -30%;
-            width: 150px;
-            height: 150px;
-            background: radial-gradient(circle, rgba(255, 235, 150, 0.15) 0%, transparent 70%);
-            border-radius: 50%;
-            pointer-events: none;
-        }
+      .tool-card::before {
+        content: "";
+        position: absolute;
+        top: -30%;
+        right: -30%;
+        width: 150px;
+        height: 150px;
+        background: radial-gradient(
+          circle,
+          rgba(255, 235, 150, 0.15) 0%,
+          transparent 70%
+        );
+        border-radius: 50%;
+        pointer-events: none;
+      }
     </style>
-</head>
-<body class="bg-gradient-to-br from-cream-200 to-warm-200 font-quicksand min-h-screen p-8 flex items-center justify-center">
+  </head>
+  <body
+    class="bg-linear-to-br from-cream-200 to-warm-200 font-quicksand min-h-screen p-8 flex items-center justify-center"
+  >
     <div class="container max-w-2xl w-full">
-        <div class="bg-white rounded-[30px] p-10 shadow-[0_15px_40px_rgba(255,180,100,0.15),0_8px_20px_rgba(255,200,150,0.1)] border-[3px] border-warm-300">
-            <h1 class="font-fredoka text-warm-500 text-5xl mb-3 font-bold">🛠️ Utils</h1>
-            <p class="text-brown-400 text-base mb-8 opacity-80">Collection of simple helper tools</p>
+      <div
+        class="bg-white rounded-[30px] p-10 shadow-[0_15px_40px_rgba(255,180,100,0.15),0_8px_20px_rgba(255,200,150,0.1)] border-[3px] border-warm-300"
+      >
+        <h1 class="font-fredoka text-warm-500 text-5xl mb-3 font-bold">
+          🛠️ Utils
+        </h1>
+        <p class="text-brown-400 text-base mb-8 opacity-80">
+          Collection of simple helper tools
+        </p>
 
-            <div class="flex flex-col gap-4">
-                <a href="/json" class="tool-card relative block p-6 bg-warm-50 border-[3px] border-warm-300 rounded-[20px] no-underline transition-all hover:border-warm-500 hover:bg-white hover:-translate-y-1 hover:shadow-[0_8px_20px_rgba(255,155,106,0.2)] overflow-hidden">
-                    <h2 class="font-fredoka text-xl font-semibold mb-2 text-warm-600">🔍 JSON Viewer & Comparator</h2>
-                    <p class="text-brown-400 text-sm">View, compare, and analyze JSON data side-by-side</p>
-                </a>
-                <a href="/watch" class="tool-card relative block p-6 bg-warm-50 border-[3px] border-warm-300 rounded-[20px] no-underline transition-all hover:border-warm-500 hover:bg-white hover:-translate-y-1 hover:shadow-[0_8px_20px_rgba(255,155,106,0.2)] overflow-hidden">
-                    <h2 class="font-fredoka text-xl font-semibold mb-2 text-warm-600">✏️ YouTube Script Extractor</h2>
-                    <p class="text-brown-400 text-sm">Extract transcripts from YouTube videos</p>
-                </a>
-            </div>
+        <div class="flex flex-col gap-4">
+          <a
+            href="/json"
+            class="tool-card relative block p-6 bg-warm-50 border-[3px] border-warm-300 rounded-[20px] no-underline transition-all hover:border-warm-500 hover:bg-white hover:-translate-y-1 hover:shadow-[0_8px_20px_rgba(255,155,106,0.2)] overflow-hidden"
+          >
+            <h2 class="font-fredoka text-xl font-semibold mb-2 text-warm-600">
+              🔍 JSON Viewer & Comparator
+            </h2>
+            <p class="text-brown-400 text-sm">
+              View, compare, and analyze JSON data side-by-side
+            </p>
+          </a>
+          <a
+            href="/watch"
+            class="tool-card relative block p-6 bg-warm-50 border-[3px] border-warm-300 rounded-[20px] no-underline transition-all hover:border-warm-500 hover:bg-white hover:-translate-y-1 hover:shadow-[0_8px_20px_rgba(255,155,106,0.2)] overflow-hidden"
+          >
+            <h2 class="font-fredoka text-xl font-semibold mb-2 text-warm-600">
+              ✏️ YouTube Script Extractor
+            </h2>
+            <p class="text-brown-400 text-sm">
+              Extract transcripts from YouTube videos
+            </p>
+          </a>
         </div>
+      </div>
     </div>
-</body>
+    <div id="elysia"></div>
+    <script type="module" src="./index.tsx"></script>
+  </body>
 </html>

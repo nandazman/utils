@@ -1,33 +1,19 @@
+import openapi, { fromTypes } from "@elysiajs/openapi";
+import staticPlugin from "@elysiajs/static";
 import { Elysia } from "elysia";
 import { Innertube } from "youtubei.js";
 
-const app = new Elysia()
-  // Trailing slash middleware - redirect all paths without trailing slash (except files)
-  .onBeforeHandle(({ request, set }) => {
-    const url = new URL(request.url);
-    const path = url.pathname;
-
-    // Skip if already has trailing slash, is root, or has file extension
-    if (path === "/" || path.endsWith("/") || path.match(/\.[a-zA-Z0-9]+$/)) {
-      return;
-    }
-
-    // Redirect with trailing slash using 308 (permanent, preserves method)
-    set.status = 308;
-    set.redirect = path + "/" + url.search;
-  })
-
-  // Serve CSS from dist folder
-  .get("/dist/output.css", () => Bun.file("public/dist/output.css"))
-
-  // Home page
-  .get("/", () => Bun.file("public/index.html"))
-
-  // JSON Viewer & Comparator
-  .get("/json", () => Bun.file("public/json-viewer.html"))
-
-  // YouTube Script Extractor
-  .get("/watch", () => Bun.file("public/youtube-script.html"))
+export const app = new Elysia()
+  .use(
+    openapi({
+      references: fromTypes(),
+    })
+  )
+  .use(
+    await staticPlugin({
+      prefix: "/",
+    })
+  )
   .post("/api/youtube-transcript", async ({ body }) => {
     try {
       // sample v=CDeB98AjJY0
@@ -68,4 +54,6 @@ const app = new Elysia()
 
   .listen(3333);
 
-console.log(`🦊 Utils server running at http://localhost:${app.server?.port}`);
+console.log(
+  `🦊 Utils server running at ${app.server?.hostname}:${app.server?.port}`
+);
