@@ -22,10 +22,21 @@ jobs:
       - name: Install dependencies
         run: bun install
 
-      - name: Build CSS
-        run: bun run build:css
+      - name: Build binary
+        run: bun run build
 
-      - name: Deploy to Server
+      - name: Deploy binary to Server
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          port: 22
+          source: "server,public"
+          target: "/home/ubuntu/utils"
+          strip_components: 0
+
+      - name: Restart application
         uses: appleboy/ssh-action@v1.0.0
         with:
           host: ${{ secrets.SERVER_HOST }}
@@ -33,25 +44,13 @@ jobs:
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           port: 22
           script: |
-            export PATH="$HOME/.bun/bin:$PATH"
+            cd /home/ubuntu/utils
+            chmod +x server
 
-            # Add GitHub to known_hosts
-            mkdir -p ~/.ssh
-            ssh-keyscan github.com >> ~/.ssh/known_hosts 2>/dev/null
-
-            # Clone repo if it doesn't exist
-            if [ ! -d "/home/ubuntu/utils" ]; then
-              cd /home/ubuntu
-              git clone git@github.com:nandazman/utils.git
-              cd utils
-              bun install
-              bun run build:css
-              pm2 start --name utils --interpreter ~/.bun/bin/bun index.ts
-              pm2 save
-            else
-              cd /home/ubuntu/utils
-              git pull origin main
-              bun install
-              bun run build:css
+            # Check if PM2 process exists
+            if pm2 list | grep -q "utils"; then
               pm2 restart utils
+            else
+              pm2 start ./server --name utils
+              pm2 save
             fi
