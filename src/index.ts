@@ -31,6 +31,8 @@ export const app = new Elysia()
       console.log("Fetching transcript for video ID:", videoId);
 
       const youtube = await Innertube.create();
+      console.log("Innertube version:", (youtube as any).version || "unknown");
+
       const info = await youtube.getInfo(videoId);
       const transcriptData = await info.getTranscript();
 
