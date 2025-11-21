@@ -28,24 +28,12 @@ export const app = new Elysia()
         return { success: false, error: "Invalid YouTube URL" };
       }
 
-      console.log("Fetching transcript for video ID:", videoId);
-
       const youtube = await Innertube.create();
-      console.log("Innertube version:", (youtube as any).version || "unknown");
 
       const info = await youtube.getInfo(videoId);
       const transcriptData = await info.getTranscript();
 
-      console.log(
-        "Transcript fetched successfully",
-        JSON.stringify(info.basic_info, null, 2)
-      );
-
-      // Debug: Check where title and duration might be
-      console.log("Available info keys:", Object.keys(info));
-      console.log("Streaming data:", (info as any).streaming_data);
-      console.log("Playability status:", (info as any).playability_status);
-      console.log("Page type:", (info as any).page?.toString());
+      console.log("Transcript fetched successfully");
 
       const segments =
         transcriptData?.transcript?.content?.body?.initial_segments
@@ -68,15 +56,27 @@ export const app = new Elysia()
       // Check all possible duration sources
       if (info.basic_info?.duration) {
         duration = info.basic_info.duration;
-      } else if ((info as any).page?.microformat?.playerMicroformatRenderer?.lengthSeconds) {
-        duration = parseInt((info as any).page.microformat.playerMicroformatRenderer.lengthSeconds);
+      } else if (
+        (info as any).page?.microformat?.playerMicroformatRenderer
+          ?.lengthSeconds
+      ) {
+        duration = parseInt(
+          (info as any).page.microformat.playerMicroformatRenderer.lengthSeconds
+        );
       } else if ((info as any).streaming_data?.formats?.[0]?.approxDurationMs) {
-        duration = Math.floor((info as any).streaming_data.formats[0].approxDurationMs / 1000);
-      } else if ((info as any).playability_status?.miniplayer?.miniplayerRenderer?.playbackMode) {
+        duration = Math.floor(
+          (info as any).streaming_data.formats[0].approxDurationMs / 1000
+        );
+      } else if (
+        (info as any).playability_status?.miniplayer?.miniplayerRenderer
+          ?.playbackMode
+      ) {
         // Last resort: try to parse from storyboards
         const storyboard = (info as any).storyboards?.boards?.[0];
         if (storyboard?.thumbnails_per_row && storyboard?.storyboard_count) {
-          duration = Math.floor(storyboard.storyboard_count * storyboard.thumbnails_per_row * 2); // rough estimate
+          duration = Math.floor(
+            storyboard.storyboard_count * storyboard.thumbnails_per_row * 2
+          ); // rough estimate
         }
       }
 
