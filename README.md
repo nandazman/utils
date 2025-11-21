@@ -114,6 +114,11 @@ The development server (`bun run dev`) runs with hot reload enabled, automatical
 4. Add link to home page (`public/index.html`)
 5. Update this README
 
+## Future Improvements
+
+- [ ] **Switch to YouTube Official API**: Replace youtubei.js with official YouTube Data API v3 for better reliability and stability
+- [ ] **Frontend Build Pipeline**: Add build step to bundle and minify frontend code, eliminating need for node_modules on server and reducing bundle size
+
 ## License
 
 MIT
