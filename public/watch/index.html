@@ -96,9 +96,8 @@
             <div class="flex-1">
               <h3
                 id="videoTitle"
-                class="font-fredoka text-lg font-semibold text-warm-600 mb-1"
+                class="font-fredoka text-lg font-semibold text-warm-600"
               ></h3>
-              <p id="videoDuration" class="text-sm text-brown-500"></p>
             </div>
             <button
               id="copyAll"
@@ -122,25 +121,10 @@
       const transcriptContent = document.getElementById("transcriptContent");
       const copyAllBtn = document.getElementById("copyAll");
       const videoTitle = document.getElementById("videoTitle");
-      const videoDuration = document.getElementById("videoDuration");
 
       let currentUrl = "";
       let currentSegments = [];
       let currentTitle = "";
-      let currentDuration = "";
-
-      function formatDuration(seconds) {
-        const hours = Math.floor(seconds / 3600);
-        const minutes = Math.floor((seconds % 3600) / 60);
-        const secs = seconds % 60;
-
-        if (hours > 0) {
-          return `${hours}:${minutes.toString().padStart(2, "0")}:${secs
-            .toString()
-            .padStart(2, "0")}`;
-        }
-        return `${minutes}:${secs.toString().padStart(2, "0")}`;
-      }
 
       function copyToClipboard(text) {
         // Create temporary textarea
@@ -178,7 +162,7 @@
 
       copyAllBtn.addEventListener("click", () => {
         const transcriptText = currentSegments.map((seg) => seg.text).join(" ");
-        const text = `title: ${currentTitle}\nduration: ${currentDuration}\n\n${transcriptText}`;
+        const text = `title: ${currentTitle}\n\n${transcriptText}`;
 
         const success = copyToClipboard(text);
         const originalText = copyAllBtn.innerHTML;
@@ -220,9 +204,7 @@
 
             // Display video metadata
             currentTitle = data.title || "Unknown Title";
-            currentDuration = formatDuration(data.duration || 0);
             videoTitle.textContent = currentTitle;
-            videoDuration.textContent = `Duration: ${currentDuration}`;
 
             // Extract video ID for links
             const videoId = url.match(

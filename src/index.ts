@@ -43,49 +43,16 @@ export const app = new Elysia()
           }))
           .filter((seg: any) => seg.text.trim().length > 0) || [];
 
-      // Try multiple possible paths for title and duration
+      // Extract title from available sources
       const title =
         info.basic_info?.title ||
         (info as any).primary_info?.title?.text ||
         (info as any).video_details?.title ||
         "Unknown Title";
 
-      // Try to extract duration from various possible locations
-      let duration = 0;
-
-      // Check all possible duration sources
-      if (info.basic_info?.duration) {
-        duration = info.basic_info.duration;
-      } else if (
-        (info as any).page?.microformat?.playerMicroformatRenderer
-          ?.lengthSeconds
-      ) {
-        duration = parseInt(
-          (info as any).page.microformat.playerMicroformatRenderer.lengthSeconds
-        );
-      } else if ((info as any).streaming_data?.formats?.[0]?.approxDurationMs) {
-        duration = Math.floor(
-          (info as any).streaming_data.formats[0].approxDurationMs / 1000
-        );
-      } else if (
-        (info as any).playability_status?.miniplayer?.miniplayerRenderer
-          ?.playbackMode
-      ) {
-        // Last resort: try to parse from storyboards
-        const storyboard = (info as any).storyboards?.boards?.[0];
-        if (storyboard?.thumbnails_per_row && storyboard?.storyboard_count) {
-          duration = Math.floor(
-            storyboard.storyboard_count * storyboard.thumbnails_per_row * 2
-          ); // rough estimate
-        }
-      }
-
-      console.log("Extracted title:", title, "duration:", duration);
-
       return {
         success: true,
         title,
-        duration,
         segments,
       };
     } catch (error) {
