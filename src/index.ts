@@ -41,8 +41,9 @@ export const app = new Elysia()
 
       // Debug: Check where title and duration might be
       console.log("Available info keys:", Object.keys(info));
-      console.log("Streaming data formats:", (info as any).streaming_data?.formats?.[0]);
-      console.log("Player config:", (info as any).player_config);
+      console.log("Streaming data:", (info as any).streaming_data);
+      console.log("Playability status:", (info as any).playability_status);
+      console.log("Page type:", (info as any).page?.toString());
 
       const segments =
         transcriptData?.transcript?.content?.body?.initial_segments
@@ -59,13 +60,23 @@ export const app = new Elysia()
         (info as any).video_details?.title ||
         "Unknown Title";
 
-      const duration =
-        info.basic_info?.duration ||
-        (info as any).primary_info?.length_seconds ||
-        (info as any).video_details?.lengthSeconds ||
-        (info as any).streaming_data?.formats?.[0]?.approxDurationMs
-          ? Math.floor((info as any).streaming_data.formats[0].approxDurationMs / 1000)
-          : 0;
+      // Try to extract duration from various possible locations
+      let duration = 0;
+
+      // Check all possible duration sources
+      if (info.basic_info?.duration) {
+        duration = info.basic_info.duration;
+      } else if ((info as any).page?.microformat?.playerMicroformatRenderer?.lengthSeconds) {
+        duration = parseInt((info as any).page.microformat.playerMicroformatRenderer.lengthSeconds);
+      } else if ((info as any).streaming_data?.formats?.[0]?.approxDurationMs) {
+        duration = Math.floor((info as any).streaming_data.formats[0].approxDurationMs / 1000);
+      } else if ((info as any).playability_status?.miniplayer?.miniplayerRenderer?.playbackMode) {
+        // Last resort: try to parse from storyboards
+        const storyboard = (info as any).storyboards?.boards?.[0];
+        if (storyboard?.thumbnails_per_row && storyboard?.storyboard_count) {
+          duration = Math.floor(storyboard.storyboard_count * storyboard.thumbnails_per_row * 2); // rough estimate
+        }
+      }
 
       console.log("Extracted title:", title, "duration:", duration);
 
