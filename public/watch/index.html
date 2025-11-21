@@ -96,12 +96,13 @@
             <div class="flex-1">
               <h3
                 id="videoTitle"
-                class="font-fredoka text-lg font-semibold text-warm-600"
+                class="font-fredoka text-lg font-semibold text-warm-600 cursor-pointer hover:text-warm-700 hover:underline"
+                title="Click to copy YouTube URL"
               ></h3>
             </div>
             <button
               id="copyAll"
-              class="px-5 py-2.5 text-sm font-bold font-fredoka bg-linear-to-br from-warm-500 to-warm-600 text-white rounded-full hover:shadow-lg hover:-translate-y-0.5 active:translate-y-0 transition-all whitespace-nowrap ml-4"
+              class="px-5 py-2.5 text-sm font-bold font-fredoka bg-linear-to-br from-warm-500 to-warm-600 text-white rounded-full hover:shadow-lg hover:-translate-y-0.5 active:translate-y-0 transition-all whitespace-nowrap ml-4 cursor-pointer"
             >
               📋 Copy All
             </button>
@@ -174,6 +175,17 @@
         }, 2000);
       });
 
+      videoTitle.addEventListener("click", () => {
+        if (!currentUrl) return;
+
+        const success = copyToClipboard(currentUrl);
+        const originalText = videoTitle.innerHTML;
+        videoTitle.innerHTML = success ? "✓ Copied URL!" : "✗ Failed";
+        setTimeout(() => {
+          videoTitle.innerHTML = originalText;
+        }, 1500);
+      });
+
       extractBtn.addEventListener("click", async () => {
         const url = urlInput.value.trim();
         if (!url) return;
@@ -229,7 +241,7 @@
             transcriptContent.innerHTML = `
               <button
                 id="copyTranscript"
-                class="sticky top-[calc(calc(100%-36px))] float-right px-4 py-2 text-sm font-bold font-fredoka bg-linear-to-br from-warm-500 to-warm-600 text-white rounded-full hover:shadow-lg hover:-translate-y-0.5 active:translate-y-0 transition-all shadow-[0_4px_12px_rgba(0,0,0,0.15)] z-10"
+                class="sticky top-[calc(calc(100%-36px))] float-right px-4 py-2 text-sm font-bold font-fredoka bg-linear-to-br from-warm-500 to-warm-600 text-white rounded-full hover:shadow-lg hover:-translate-y-0.5 active:translate-y-0 transition-all shadow-[0_4px_12px_rgba(0,0,0,0.15)] z-10 cursor-pointer"
               >
                 📋 Copy Transcript
               </button>
