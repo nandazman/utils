@@ -44,7 +44,12 @@ export const app = new Elysia()
           }))
           .filter((seg: any) => seg.text.trim().length > 0) || [];
 
-      return { success: true, segments };
+      return {
+        success: true,
+        title: info.basic_info.title || "Unknown Title",
+        duration: info.basic_info.duration || 0,
+        segments,
+      };
     } catch (error) {
       const message = error instanceof Error ? error.message : "Unknown error";
       console.error("Error fetching transcript:", error);

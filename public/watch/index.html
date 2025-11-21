@@ -90,18 +90,26 @@
           class="hidden mt-8 bg-warm-50 border-[3px] border-dashed border-warm-300 rounded-[20px] overflow-hidden"
         >
           <div
-            class="flex items-center justify-end px-6 py-4 border-b-[3px] border-dashed border-warm-300 bg-cream-100"
+            id="videoMetadata"
+            class="flex items-start justify-between px-6 py-4 border-b-[3px] border-dashed border-warm-300 bg-cream-100"
           >
+            <div class="flex-1">
+              <h3
+                id="videoTitle"
+                class="font-fredoka text-lg font-semibold text-warm-600 mb-1"
+              ></h3>
+              <p id="videoDuration" class="text-sm text-brown-500"></p>
+            </div>
             <button
               id="copyAll"
-              class="px-5 py-2.5 text-sm font-bold font-fredoka bg-linear-to-br from-warm-500 to-warm-600 text-white rounded-full hover:shadow-lg hover:-translate-y-0.5 active:translate-y-0 transition-all"
+              class="px-5 py-2.5 text-sm font-bold font-fredoka bg-linear-to-br from-warm-500 to-warm-600 text-white rounded-full hover:shadow-lg hover:-translate-y-0.5 active:translate-y-0 transition-all whitespace-nowrap ml-4"
             >
               📋 Copy All
             </button>
           </div>
           <div
             id="transcriptContent"
-            class="p-6 max-h-96 overflow-y-auto text-[0.95rem] text-brown-600 hide-scrollbar"
+            class="relative p-4 max-h-96 overflow-y-auto text-[0.95rem] text-brown-600 hide-scrollbar"
           ></div>
         </div>
       </div>
@@ -113,9 +121,26 @@
       const result = document.getElementById("result");
       const transcriptContent = document.getElementById("transcriptContent");
       const copyAllBtn = document.getElementById("copyAll");
+      const videoTitle = document.getElementById("videoTitle");
+      const videoDuration = document.getElementById("videoDuration");
 
       let currentUrl = "";
       let currentSegments = [];
+      let currentTitle = "";
+      let currentDuration = "";
+
+      function formatDuration(seconds) {
+        const hours = Math.floor(seconds / 3600);
+        const minutes = Math.floor((seconds % 3600) / 60);
+        const secs = seconds % 60;
+
+        if (hours > 0) {
+          return `${hours}:${minutes.toString().padStart(2, "0")}:${secs
+            .toString()
+            .padStart(2, "0")}`;
+        }
+        return `${minutes}:${secs.toString().padStart(2, "0")}`;
+      }
 
       function copyToClipboard(text) {
         // Create temporary textarea
@@ -152,7 +177,8 @@
       }
 
       copyAllBtn.addEventListener("click", () => {
-        const text = currentSegments.map((seg) => seg.text).join(" ");
+        const transcriptText = currentSegments.map((seg) => seg.text).join(" ");
+        const text = `title: ${currentTitle}\nduration: ${currentDuration}\n\n${transcriptText}`;
 
         const success = copyToClipboard(text);
         const originalText = copyAllBtn.innerHTML;
@@ -192,13 +218,19 @@
             transcriptContent.classList.remove("text-red-600");
             transcriptContent.classList.add("text-brown-600");
 
+            // Display video metadata
+            currentTitle = data.title || "Unknown Title";
+            currentDuration = formatDuration(data.duration || 0);
+            videoTitle.textContent = currentTitle;
+            videoDuration.textContent = `Duration: ${currentDuration}`;
+
             // Extract video ID for links
             const videoId = url.match(
               /(?:youtu\.be\/|youtube\.com(?:\/embed\/|\/v\/|\/watch\?v=|\/watch\?.+&v=))([\w-]{11})/
             )?.[1];
 
             // Format timestamps and display
-            transcriptContent.innerHTML = data.segments
+            const transcriptHTML = data.segments
               .map((seg) => {
                 const minutes = Math.floor(seg.startMs / 60000);
                 const seconds = Math.floor((seg.startMs % 60000) / 1000);
@@ -211,6 +243,16 @@
                 return `<div class="mb-3"><span class="font-semibold text-warm-600 cursor-pointer hover:text-warm-700 hover:underline" data-link="${youtubeLink}" title="Click to copy link with timestamp">[${timestamp}]</span> ${seg.text}</div>`;
               })
               .join("");
+
+            transcriptContent.innerHTML = `
+              <button
+                id="copyTranscript"
+                class="sticky top-[calc(calc(100%-36px))] float-right px-4 py-2 text-sm font-bold font-fredoka bg-linear-to-br from-warm-500 to-warm-600 text-white rounded-full hover:shadow-lg hover:-translate-y-0.5 active:translate-y-0 transition-all shadow-[0_4px_12px_rgba(0,0,0,0.15)] z-10"
+              >
+                📋 Copy Transcript
+              </button>
+              ${transcriptHTML}
+            `;
 
             // Add click handlers for timestamps
             transcriptContent
@@ -228,6 +270,24 @@
                   }, 1500);
                 });
               });
+
+            // Re-attach copy transcript button event listener
+            const newCopyTranscriptBtn =
+              document.getElementById("copyTranscript");
+            newCopyTranscriptBtn.addEventListener("click", () => {
+              const text = currentSegments.map((seg) => seg.text).join(" ");
+
+              const success = copyToClipboard(text);
+              const originalText = newCopyTranscriptBtn.innerHTML;
+              newCopyTranscriptBtn.innerHTML = success
+                ? "✓ Copied!"
+                : "✗ Failed";
+              newCopyTranscriptBtn.disabled = true;
+              setTimeout(() => {
+                newCopyTranscriptBtn.innerHTML = originalText;
+                newCopyTranscriptBtn.disabled = false;
+              }, 2000);
+            });
           } else {
             result.classList.remove("border-green-300", "bg-green-50/50");
             result.classList.add("border-red-300", "bg-red-50");
