@@ -39,6 +39,10 @@ export const app = new Elysia()
         JSON.stringify(info.basic_info, null, 2)
       );
 
+      // Debug: Check where title and duration might be
+      console.log("Available info keys:", Object.keys(info));
+      console.log("Primary info:", info.primary_info);
+
       const segments =
         transcriptData?.transcript?.content?.body?.initial_segments
           ?.map((segment: any) => ({
@@ -47,10 +51,25 @@ export const app = new Elysia()
           }))
           .filter((seg: any) => seg.text.trim().length > 0) || [];
 
+      // Try multiple possible paths for title and duration
+      const title =
+        info.basic_info?.title ||
+        (info as any).primary_info?.title?.text ||
+        (info as any).video_details?.title ||
+        "Unknown Title";
+
+      const duration =
+        info.basic_info?.duration ||
+        (info as any).primary_info?.length_seconds ||
+        (info as any).video_details?.lengthSeconds ||
+        0;
+
+      console.log("Extracted title:", title, "duration:", duration);
+
       return {
         success: true,
-        title: info.basic_info.title || "Unknown Title",
-        duration: info.basic_info.duration || 0,
+        title,
+        duration,
         segments,
       };
     } catch (error) {
