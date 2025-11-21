@@ -34,7 +34,10 @@ export const app = new Elysia()
       const info = await youtube.getInfo(videoId);
       const transcriptData = await info.getTranscript();
 
-      console.log("Transcript fetched successfully");
+      console.log(
+        "Transcript fetched successfully",
+        JSON.stringify(info.basic_info, null, 2)
+      );
 
       const segments =
         transcriptData?.transcript?.content?.body?.initial_segments
