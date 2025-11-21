@@ -41,7 +41,8 @@ export const app = new Elysia()
 
       // Debug: Check where title and duration might be
       console.log("Available info keys:", Object.keys(info));
-      console.log("Primary info:", info.primary_info);
+      console.log("Streaming data formats:", (info as any).streaming_data?.formats?.[0]);
+      console.log("Player config:", (info as any).player_config);
 
       const segments =
         transcriptData?.transcript?.content?.body?.initial_segments
@@ -62,7 +63,9 @@ export const app = new Elysia()
         info.basic_info?.duration ||
         (info as any).primary_info?.length_seconds ||
         (info as any).video_details?.lengthSeconds ||
-        0;
+        (info as any).streaming_data?.formats?.[0]?.approxDurationMs
+          ? Math.floor((info as any).streaming_data.formats[0].approxDurationMs / 1000)
+          : 0;
 
       console.log("Extracted title:", title, "duration:", duration);
 
