@@ -164,7 +164,7 @@
       }
 
       copyAllBtn.addEventListener("click", () => {
-        const transcriptText = currentSegments.map((seg) => seg.text).join(" ");
+        const transcriptText = currentSegments.map((seg) => seg.text).join("\n");
         const text = `title: ${currentTitle}\n\n${transcriptText}`;
 
         const success = copyToClipboard(text);
@@ -278,7 +278,7 @@
             const newCopyTranscriptBtn =
               document.getElementById("copyTranscript");
             newCopyTranscriptBtn.addEventListener("click", () => {
-              const text = currentSegments.map((seg) => seg.text).join(" ");
+              const text = currentSegments.map((seg) => seg.text).join("\n");
 
               const success = copyToClipboard(text);
               const originalText = newCopyTranscriptBtn.innerHTML;
