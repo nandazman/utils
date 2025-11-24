@@ -203,7 +203,7 @@
             return `[${timestamp}] ${seg.text}`;
           })
           .join("\n");
-        const text = `title: ${currentTitle}\n\n${transcriptWithTimestamps}`;
+        const text = `title: ${currentTitle}\nvideo: ${currentUrl}\n\n${transcriptWithTimestamps}`;
 
         const success = copyToClipboard(text);
         const originalText = copyAllBtn.innerHTML;
