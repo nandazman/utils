@@ -86,33 +86,42 @@
           Extract Script
         </button>
 
-        <div
-          id="result"
-          class="hidden mt-8 bg-warm-50 border-[3px] border-dashed border-warm-300 rounded-[20px] overflow-hidden"
-        >
-          <div
-            id="videoMetadata"
-            class="flex items-center justify-between px-6 py-4 border-b-[3px] border-dashed border-warm-300 bg-cream-100 gap-x-3"
-          >
-            <div class="flex-1">
-              <h3
-                id="videoTitle"
-                class="font-fredoka text-lg font-semibold text-warm-600 cursor-pointer hover:text-warm-700 hover:underline max-w-[300px] truncate"
-                title="Click to copy YouTube URL"
-              ></h3>
-            </div>
+        <div id="resultWrapper" class="hidden mt-8">
+          <div class="flex justify-end gap-2 mb-3">
+            <button
+              type="button"
+              id="copyTextOnly"
+              class="px-5 py-2.5 text-sm font-bold font-fredoka bg-linear-to-br from-warm-400 to-warm-500 text-white rounded-full hover:shadow-lg hover:-translate-y-0.5 active:translate-y-0 transition-all whitespace-nowrap cursor-pointer shadow-[0_4px_12px_rgba(0,0,0,0.1)]"
+            >
+              📄 Copy Text Only
+            </button>
             <button
               type="button"
               id="copyAll"
-              class="px-5 py-2.5 text-sm font-bold font-fredoka bg-linear-to-br from-warm-500 to-warm-600 text-white rounded-full hover:shadow-lg hover:-translate-y-0.5 active:translate-y-0 transition-all whitespace-nowrap ml-4 cursor-pointer"
+              class="px-5 py-2.5 text-sm font-bold font-fredoka bg-linear-to-br from-warm-500 to-warm-600 text-white rounded-full hover:shadow-lg hover:-translate-y-0.5 active:translate-y-0 transition-all whitespace-nowrap cursor-pointer shadow-[0_4px_12px_rgba(0,0,0,0.1)]"
             >
               📋 Copy All
             </button>
           </div>
           <div
-            id="transcriptContent"
-            class="relative p-4 max-h-96 overflow-y-auto text-[0.95rem] text-brown-600 hide-scrollbar"
-          ></div>
+            id="result"
+            class="bg-warm-50 border-[3px] border-dashed border-warm-300 rounded-[20px] overflow-hidden"
+          >
+            <div
+              id="videoMetadata"
+              class="flex items-center px-6 py-4 border-b-[3px] border-dashed border-warm-300 bg-cream-100"
+            >
+              <h3
+                id="videoTitle"
+                class="font-fredoka text-lg font-semibold text-warm-600 cursor-pointer hover:text-warm-700 hover:underline truncate"
+                title="Click to copy YouTube URL"
+              ></h3>
+            </div>
+            <div
+              id="transcriptContent"
+              class="relative p-4 max-h-96 overflow-y-auto text-[0.95rem] text-brown-600 hide-scrollbar"
+            ></div>
+          </div>
         </div>
       </div>
     </div>
@@ -120,14 +129,17 @@
     <script>
       const urlInput = document.getElementById("url");
       const extractBtn = document.getElementById("extract");
+      const resultWrapper = document.getElementById("resultWrapper");
       const result = document.getElementById("result");
       const transcriptContent = document.getElementById("transcriptContent");
       const copyAllBtn = document.getElementById("copyAll");
+      const copyTextOnlyBtn = document.getElementById("copyTextOnly");
       const videoTitle = document.getElementById("videoTitle");
 
       let currentUrl = "";
       let currentSegments = [];
       let currentTitle = "";
+      let hasAutoExtracted = false;
 
       function copyToClipboard(text) {
         // Create temporary textarea
@@ -159,13 +171,39 @@
       if (videoParam) {
         const videoUrl = `https://youtube.com/watch?v=${videoParam}`;
         urlInput.value = videoUrl;
-        // Auto-extract on load
-        setTimeout(() => extractBtn.click(), 100);
+
+        // Only auto-extract if we haven't already auto-extracted
+        if (!hasAutoExtracted) {
+          hasAutoExtracted = true;
+          // Auto-extract on load
+          setTimeout(() => extractBtn.click(), 100);
+        }
       }
 
-      copyAllBtn.addEventListener("click", () => {
+      copyTextOnlyBtn.addEventListener("click", () => {
         const transcriptText = currentSegments.map((seg) => seg.text).join("\n");
         const text = `title: ${currentTitle}\n\n${transcriptText}`;
+
+        const success = copyToClipboard(text);
+        const originalText = copyTextOnlyBtn.innerHTML;
+        copyTextOnlyBtn.innerHTML = success ? "✓ Copied!" : "✗ Failed";
+        copyTextOnlyBtn.disabled = true;
+        setTimeout(() => {
+          copyTextOnlyBtn.innerHTML = originalText;
+          copyTextOnlyBtn.disabled = false;
+        }, 2000);
+      });
+
+      copyAllBtn.addEventListener("click", () => {
+        const transcriptWithTimestamps = currentSegments
+          .map((seg) => {
+            const minutes = Math.floor(seg.startMs / 60000);
+            const seconds = Math.floor((seg.startMs % 60000) / 1000);
+            const timestamp = `${minutes}:${seconds.toString().padStart(2, "0")}`;
+            return `[${timestamp}] ${seg.text}`;
+          })
+          .join("\n");
+        const text = `title: ${currentTitle}\n\n${transcriptWithTimestamps}`;
 
         const success = copyToClipboard(text);
         const originalText = copyAllBtn.innerHTML;
@@ -195,8 +233,8 @@
         currentUrl = url;
         extractBtn.disabled = true;
         extractBtn.textContent = "Extracting...";
-        result.classList.remove("show");
-        result.classList.add("hidden");
+        resultWrapper.classList.remove("show");
+        resultWrapper.classList.add("hidden");
 
         try {
           const response = await fetch("/api/youtube-transcript", {
@@ -206,8 +244,8 @@
           });
 
           const data = await response.json();
-          result.classList.remove("hidden");
-          result.classList.add("show", "block");
+          resultWrapper.classList.remove("hidden");
+          resultWrapper.classList.add("show", "block");
 
           if (data.success) {
             currentSegments = data.segments;
@@ -299,8 +337,9 @@
             transcriptContent.textContent = `Error: ${data.error}`;
           }
         } catch (error) {
-          result.classList.remove("hidden");
-          result.classList.add("show", "block", "border-red-300", "bg-red-50");
+          resultWrapper.classList.remove("hidden");
+          resultWrapper.classList.add("show", "block");
+          result.classList.add("border-red-300", "bg-red-50");
           result.classList.remove("border-green-300", "bg-green-50/50");
           transcriptContent.classList.add("text-red-600");
           transcriptContent.classList.remove("text-brown-600");
